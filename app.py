@@ -3,9 +3,11 @@ import streamlit.components.v1
 import requests
 import base64
 import os
+
+# ── KEYS ──────────────────────────────────────────────────────────────────────
 import base64 as _b64
-EL_KEY   = _b64.b64decode("c2tfY2FiZTdl...").decode()
-GROQ_KEY = _b64.b64decode("Z3NrX3dpN2lm...").decode()
+EL_KEY   = _b64.b64decode("c2tfY2FiZTdlNzdjODA2N2ZhYzkxZDZmZGU0YmJjNDYxYjg5NGY2MTczNTNmYzkzMmEz").decode()
+GROQ_KEY = _b64.b64decode("Z3NrX05UZ2NXNmswTTJWeVNiTXZuZVB4V0dkeWIzRlloa29VZjVwb0dpam55OWJrUndSRDRQQ2Q=").decode()
 
 AGENTS = {
     "Aria": {
@@ -62,7 +64,11 @@ def groq_call(agent_name, question, context=""):
             )
             if r.status_code == 200:
                 return r.json()["choices"][0]["message"]["content"]
-        except: continue
+            else:
+                st.caption(f"⚠️ Groq [{model}] {r.status_code}: {r.text[:150]}")
+        except Exception as e:
+            st.caption(f"⚠️ Groq [{model}] error: {e}")
+            continue
     return None
 
 def tts(text, voice_id):
@@ -93,7 +99,7 @@ def play(audio_bytes, label=""):
     b64 = base64.b64encode(audio_bytes).decode()
     if label:
         st.markdown(f'<div class="vtag">🔊 {label}</div>', unsafe_allow_html=True)
-    st.components.v1.html(
+    streamlit.components.v1.html(
         f'<audio autoplay style="display:none"><source src="data:audio/mpeg;base64,{b64}" type="audio/mpeg"></audio>',
         height=0
     )
@@ -103,295 +109,64 @@ st.set_page_config(page_title="VocalClaw", page_icon="🎙️", layout="centered
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-/* ── BASE ── */
-.stApp{
-  background: #06060E !important;
-  background-image:
-    radial-gradient(ellipse 90% 60% at 15% 10%, rgba(167,139,250,0.055) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 50% at 85% 85%, rgba(56,189,248,0.04) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(52,211,153,0.025) 0%, transparent 65%) !important;
-}
-.block-container{max-width:700px !important; padding:0 1.5rem 6rem !important}
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(167,139,250,0.2);border-radius:2px}
-
-/* ── HERO ── */
+.stApp{background:#06060E !important;background-image:radial-gradient(ellipse 90% 60% at 15% 10%,rgba(167,139,250,0.055) 0%,transparent 60%),radial-gradient(ellipse 70% 50% at 85% 85%,rgba(56,189,248,0.04) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 50% 50%,rgba(52,211,153,0.025) 0%,transparent 65%) !important;}
+.block-container{max-width:700px !important;padding:0 1.5rem 6rem !important}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(167,139,250,0.2);border-radius:2px}
 .hero{text-align:center;padding:4rem 0 2.5rem;position:relative}
-
-.hero-eyebrow{
-  display:inline-flex;align-items:center;gap:8px;
-  background:rgba(167,139,250,0.08);
-  border:1px solid rgba(167,139,250,0.2);
-  color:#A78BFA !important;
-  font-family:'JetBrains Mono',monospace !important;
-  font-size:0.55rem;letter-spacing:0.22em;
-  padding:5px 16px;border-radius:2px;
-  text-transform:uppercase;margin-bottom:1.8rem;
-}
-
-.hero-name{
-  font-family:'Bebas Neue',sans-serif !important;
-  font-size:clamp(5rem,15vw,8.5rem);
-  letter-spacing:0.06em;line-height:0.85;
-  background:linear-gradient(160deg,#ffffff 15%,rgba(167,139,250,0.9) 52%,rgba(56,189,248,0.85) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  margin-bottom:0.6rem;
-  text-shadow:none;
-  filter:drop-shadow(0 0 60px rgba(167,139,250,0.15));
-}
-
-.hero-line{
-  width:40px;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(167,139,250,0.4),transparent);
-  margin:1.2rem auto;
-}
-
-.hero-sub{
-  font-family:'JetBrains Mono',monospace !important;
-  font-size:0.58rem;letter-spacing:0.22em;
-  color:rgba(255,255,255,0.18) !important;
-  text-transform:uppercase;margin-bottom:3rem;
-}
-
-/* ── STATS ── */
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);color:#A78BFA !important;font-family:'JetBrains Mono',monospace !important;font-size:0.55rem;letter-spacing:0.22em;padding:5px 16px;border-radius:2px;text-transform:uppercase;margin-bottom:1.8rem;}
+.hero-name{font-family:'Bebas Neue',sans-serif !important;font-size:clamp(5rem,15vw,8.5rem);letter-spacing:0.06em;line-height:0.85;background:linear-gradient(160deg,#ffffff 15%,rgba(167,139,250,0.9) 52%,rgba(56,189,248,0.85) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.6rem;filter:drop-shadow(0 0 60px rgba(167,139,250,0.15));}
+.hero-line{width:40px;height:1px;background:linear-gradient(90deg,transparent,rgba(167,139,250,0.4),transparent);margin:1.2rem auto;}
+.hero-sub{font-family:'JetBrains Mono',monospace !important;font-size:0.58rem;letter-spacing:0.22em;color:rgba(255,255,255,0.18) !important;text-transform:uppercase;margin-bottom:3rem;}
 .stats{display:flex;justify-content:center;gap:3.5rem;margin-bottom:3.5rem}
-.stat-n{
-  font-family:'Bebas Neue',sans-serif !important;
-  font-size:2.8rem;letter-spacing:0.04em;display:block;line-height:1;
-}
-.stat-l{
-  font-family:'JetBrains Mono',monospace !important;
-  font-size:0.5rem;letter-spacing:0.18em;
-  color:rgba(255,255,255,0.18) !important;
-  text-transform:uppercase;display:block;margin-top:4px;
-}
-
-/* ── AGENT CARDS ── */
+.stat-n{font-family:'Bebas Neue',sans-serif !important;font-size:2.8rem;letter-spacing:0.04em;display:block;line-height:1;}
+.stat-l{font-family:'JetBrains Mono',monospace !important;font-size:0.5rem;letter-spacing:0.18em;color:rgba(255,255,255,0.18) !important;text-transform:uppercase;display:block;margin-top:4px;}
 .agents{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:2.5rem}
-
-.agent{
-  background:rgba(255,255,255,0.018);
-  border:1px solid rgba(255,255,255,0.055);
-  border-radius:12px;padding:1.1rem 0.6rem 1rem;
-  text-align:center;position:relative;overflow:hidden;
-  transition:border-color 0.2s,background 0.2s;
-  cursor:default;
-}
-.agent::before{
-  content:'';position:absolute;
-  top:0;left:0;right:0;height:1px;
-  border-radius:12px 12px 0 0;
-}
-.agent.aria::before{background:#A78BFA}
-.agent.rex::before{background:#38BDF8}
-.agent.lex::before{background:#34D399}
-.agent.max::before{background:#FB923C}
-.agent-glow{
-  position:absolute;top:-30px;left:50%;transform:translateX(-50%);
-  width:60px;height:60px;border-radius:50%;
-  filter:blur(20px);opacity:0.15;
-  transition:opacity 0.2s;
-}
-.agent:hover{background:rgba(255,255,255,0.028);border-color:rgba(255,255,255,0.1)}
-.agent:hover .agent-glow{opacity:0.28}
-
+.agent{background:rgba(255,255,255,0.018);border:1px solid rgba(255,255,255,0.055);border-radius:12px;padding:1.1rem 0.6rem 1rem;text-align:center;position:relative;overflow:hidden;transition:border-color 0.2s,background 0.2s;cursor:default;}
+.agent::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;border-radius:12px 12px 0 0;}
+.agent.aria::before{background:#A78BFA}.agent.rex::before{background:#38BDF8}.agent.lex::before{background:#34D399}.agent.max::before{background:#FB923C}
+.agent-glow{position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:60px;height:60px;border-radius:50%;filter:blur(20px);opacity:0.15;transition:opacity 0.2s;}
+.agent:hover{background:rgba(255,255,255,0.028);border-color:rgba(255,255,255,0.1)}.agent:hover .agent-glow{opacity:0.28}
 .agent-icon{font-size:1.4rem;display:block;margin-bottom:0.4rem;position:relative;z-index:1}
-.agent-name{
-  font-family:'Inter',sans-serif !important;font-weight:600;
-  font-size:0.88rem;display:block;position:relative;z-index:1;
-}
-.agent-role{
-  font-family:'JetBrains Mono',monospace !important;
-  font-size:0.5rem;color:rgba(255,255,255,0.22) !important;
-  letter-spacing:0.12em;text-transform:uppercase;
-  display:block;margin-top:2px;position:relative;z-index:1;
-}
-.agent-tagline{
-  font-family:'Inter',sans-serif !important;font-style:italic;
-  font-size:0.62rem;color:rgba(255,255,255,0.15) !important;
-  display:block;margin-top:4px;position:relative;z-index:1;
-}
-
-/* ── SECTION HEADER ── */
-.sec{
-  font-family:'JetBrains Mono',monospace !important;
-  font-size:0.55rem;letter-spacing:0.22em;text-transform:uppercase;
-  color:rgba(255,255,255,0.18) !important;
-  display:block;margin-bottom:0.5rem;
-}
-
-/* ── MODE BUTTONS ── */
-.stButton>button{
-  background:rgba(255,255,255,0.02) !important;
-  color:rgba(255,255,255,0.38) !important;
-  border:1px solid rgba(255,255,255,0.06) !important;
-  border-radius:8px !important;
-  font-family:'Inter',sans-serif !important;font-weight:500 !important;
-  font-size:0.8rem !important;padding:0.6rem 1rem !important;
-  transition:all 0.15s ease !important;letter-spacing:0.01em !important;
-}
-.stButton>button:hover{
-  background:rgba(167,139,250,0.07) !important;
-  border-color:rgba(167,139,250,0.22) !important;
-  color:#C4B5FD !important;
-}
-
-/* ── ACTIVE MODE ── */
-.mode-pill{
-  border-radius:8px;padding:0.6rem 1rem;text-align:center;
-  font-family:'JetBrains Mono',monospace !important;font-size:0.62rem;
-  letter-spacing:0.1em;margin-bottom:1.6rem;border:1px solid;
-}
-
-/* ── TEXTAREA ── */
-.stTextArea textarea{
-  background:rgba(255,255,255,0.02) !important;
-  border:1px solid rgba(255,255,255,0.07) !important;
-  border-radius:10px !important;color:#EEEBf8 !important;
-  font-family:'Inter',sans-serif !important;font-size:0.92rem !important;
-  padding:1rem !important;line-height:1.68 !important;resize:none !important;
-}
-.stTextArea textarea:focus{
-  border-color:rgba(167,139,250,0.3) !important;
-  box-shadow:0 0 0 3px rgba(167,139,250,0.05) !important;outline:none !important;
-}
-.stTextArea textarea::placeholder{color:rgba(255,255,255,0.13) !important}
-.stTextArea label{display:none !important}
-
-/* ── PRIMARY BUTTON ── */
-button[kind="primary"]{
-  background:linear-gradient(135deg,#5B21B6 0%,#3730A3 100%) !important;
-  color:#fff !important;border:none !important;border-radius:8px !important;
-  font-family:'Inter',sans-serif !important;font-weight:600 !important;
-  font-size:0.88rem !important;padding:0.64rem 1.4rem !important;
-  box-shadow:0 0 0 1px rgba(91,33,182,0.5),0 4px 24px rgba(91,33,182,0.22) !important;
-  letter-spacing:0.01em !important;
-}
-button[kind="primary"]:hover{
-  box-shadow:0 0 0 1px rgba(91,33,182,0.7),0 6px 32px rgba(91,33,182,0.38) !important;
-  transform:translateY(-1px) !important;
-}
-
-/* ── SELECT ── */
-.stSelectbox>div>div{
-  background:rgba(255,255,255,0.02) !important;
-  border:1px solid rgba(255,255,255,0.07) !important;
-  border-radius:8px !important;
-  color:rgba(255,255,255,0.5) !important;
-  font-family:'Inter',sans-serif !important;font-size:0.84rem !important;
-}
-.stSelectbox svg{fill:rgba(255,255,255,0.22) !important}
-.stSelectbox label{
-  color:rgba(255,255,255,0.18) !important;
-  font-family:'JetBrains Mono',monospace !important;
-  font-size:0.55rem !important;letter-spacing:0.18em;text-transform:uppercase;
-}
-
-/* ── ROUTING ── */
-.route{
-  background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.12);
-  border-radius:8px;padding:0.6rem 1rem;margin:0.8rem 0;
-  font-family:'JetBrains Mono',monospace !important;font-size:0.65rem;
-  color:rgba(255,255,255,0.32) !important;letter-spacing:0.08em;text-align:center;
-}
-
-/* ── RESPONSE CARD ── */
-.rcard{
-  border-radius:12px;padding:1.25rem 1.4rem;margin:0.7rem 0;
-  position:relative;overflow:hidden;
-}
+.agent-name{font-family:'Inter',sans-serif !important;font-weight:600;font-size:0.88rem;display:block;position:relative;z-index:1;}
+.agent-role{font-family:'JetBrains Mono',monospace !important;font-size:0.5rem;color:rgba(255,255,255,0.22) !important;letter-spacing:0.12em;text-transform:uppercase;display:block;margin-top:2px;position:relative;z-index:1;}
+.agent-tagline{font-family:'Inter',sans-serif !important;font-style:italic;font-size:0.62rem;color:rgba(255,255,255,0.15) !important;display:block;margin-top:4px;position:relative;z-index:1;}
+.sec{font-family:'JetBrains Mono',monospace !important;font-size:0.55rem;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.18) !important;display:block;margin-bottom:0.5rem;}
+.stButton>button{background:rgba(255,255,255,0.02) !important;color:rgba(255,255,255,0.38) !important;border:1px solid rgba(255,255,255,0.06) !important;border-radius:8px !important;font-family:'Inter',sans-serif !important;font-weight:500 !important;font-size:0.8rem !important;padding:0.6rem 1rem !important;transition:all 0.15s ease !important;letter-spacing:0.01em !important;}
+.stButton>button:hover{background:rgba(167,139,250,0.07) !important;border-color:rgba(167,139,250,0.22) !important;color:#C4B5FD !important;}
+.mode-pill{border-radius:8px;padding:0.6rem 1rem;text-align:center;font-family:'JetBrains Mono',monospace !important;font-size:0.62rem;letter-spacing:0.1em;margin-bottom:1.6rem;border:1px solid;}
+.stTextArea textarea{background:rgba(255,255,255,0.02) !important;border:1px solid rgba(255,255,255,0.07) !important;border-radius:10px !important;color:#EEEBf8 !important;font-family:'Inter',sans-serif !important;font-size:0.92rem !important;padding:1rem !important;line-height:1.68 !important;resize:none !important;}
+.stTextArea textarea:focus{border-color:rgba(167,139,250,0.3) !important;box-shadow:0 0 0 3px rgba(167,139,250,0.05) !important;outline:none !important;}
+.stTextArea textarea::placeholder{color:rgba(255,255,255,0.13) !important}.stTextArea label{display:none !important}
+button[kind="primary"]{background:linear-gradient(135deg,#5B21B6 0%,#3730A3 100%) !important;color:#fff !important;border:none !important;border-radius:8px !important;font-family:'Inter',sans-serif !important;font-weight:600 !important;font-size:0.88rem !important;padding:0.64rem 1.4rem !important;box-shadow:0 0 0 1px rgba(91,33,182,0.5),0 4px 24px rgba(91,33,182,0.22) !important;letter-spacing:0.01em !important;}
+button[kind="primary"]:hover{box-shadow:0 0 0 1px rgba(91,33,182,0.7),0 6px 32px rgba(91,33,182,0.38) !important;transform:translateY(-1px) !important;}
+.stSelectbox>div>div{background:rgba(255,255,255,0.02) !important;border:1px solid rgba(255,255,255,0.07) !important;border-radius:8px !important;color:rgba(255,255,255,0.5) !important;font-family:'Inter',sans-serif !important;font-size:0.84rem !important;}
+.stSelectbox svg{fill:rgba(255,255,255,0.22) !important}.stSelectbox label{color:rgba(255,255,255,0.18) !important;font-family:'JetBrains Mono',monospace !important;font-size:0.55rem !important;letter-spacing:0.18em;text-transform:uppercase;}
+.route{background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.12);border-radius:8px;padding:0.6rem 1rem;margin:0.8rem 0;font-family:'JetBrains Mono',monospace !important;font-size:0.65rem;color:rgba(255,255,255,0.32) !important;letter-spacing:0.08em;text-align:center;}
+.rcard{border-radius:12px;padding:1.25rem 1.4rem;margin:0.7rem 0;position:relative;overflow:hidden;}
 .rcard::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;}
-
-.rcard.aria{background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.1);}
-.rcard.aria::before{background:linear-gradient(180deg,#A78BFA,transparent);}
-.rcard.rex {background:rgba(56,189,248,0.04); border:1px solid rgba(56,189,248,0.1);}
-.rcard.rex::before {background:linear-gradient(180deg,#38BDF8,transparent);}
-.rcard.lex {background:rgba(52,211,153,0.04); border:1px solid rgba(52,211,153,0.1);}
-.rcard.lex::before {background:linear-gradient(180deg,#34D399,transparent);}
-.rcard.max {background:rgba(251,146,60,0.04); border:1px solid rgba(251,146,60,0.1);}
-.rcard.max::before {background:linear-gradient(180deg,#FB923C,transparent);}
-
-.rcard-hd{
-  font-family:'JetBrains Mono',monospace !important;
-  font-size:0.6rem;font-weight:500;letter-spacing:0.14em;
-  margin-bottom:0.6rem;display:flex;align-items:center;gap:8px;
-}
-.rcard-hd.aria{color:#A78BFA !important}.rcard-hd.rex{color:#38BDF8 !important}
-.rcard-hd.lex {color:#34D399 !important}.rcard-hd.max{color:#FB923C !important}
-
+.rcard.aria{background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.1);}.rcard.aria::before{background:linear-gradient(180deg,#A78BFA,transparent);}
+.rcard.rex{background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.1);}.rcard.rex::before{background:linear-gradient(180deg,#38BDF8,transparent);}
+.rcard.lex{background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.1);}.rcard.lex::before{background:linear-gradient(180deg,#34D399,transparent);}
+.rcard.max{background:rgba(251,146,60,0.04);border:1px solid rgba(251,146,60,0.1);}.rcard.max::before{background:linear-gradient(180deg,#FB923C,transparent);}
+.rcard-hd{font-family:'JetBrains Mono',monospace !important;font-size:0.6rem;font-weight:500;letter-spacing:0.14em;margin-bottom:0.6rem;display:flex;align-items:center;gap:8px;}
+.rcard-hd.aria{color:#A78BFA !important}.rcard-hd.rex{color:#38BDF8 !important}.rcard-hd.lex{color:#34D399 !important}.rcard-hd.max{color:#FB923C !important}
 .rcard-dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0;}
-.rcard-dot.aria{background:#A78BFA}.rcard-dot.rex{background:#38BDF8}
-.rcard-dot.lex{background:#34D399}.rcard-dot.max{background:#FB923C}
-
-.rcard-body{
-  font-family:'Inter',sans-serif !important;font-size:0.92rem;
-  line-height:1.78;color:rgba(238,235,248,0.75) !important;
-}
-
-/* ── VOICE TAG ── */
-.vtag{
-  display:inline-flex;align-items:center;gap:5px;
-  background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.14);
-  color:#6EE7B7 !important;font-family:'JetBrains Mono',monospace !important;
-  font-size:0.56rem;padding:3px 10px;border-radius:3px;letter-spacing:0.1em;
-  margin:0.65rem 0 0.2rem;
-}
-
-/* ── TRANSCRIPT ── */
-.tx{
-  background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.1);
-  border-radius:8px;padding:0.65rem 0.9rem;margin:0.5rem 0;
-  font-family:'Inter',sans-serif !important;font-size:0.87rem;
-  color:rgba(238,235,248,0.48) !important;font-style:italic;
-}
-.tx-lbl{font-family:'JetBrains Mono',monospace !important;font-size:0.54rem;
-  color:#38BDF8 !important;letter-spacing:0.12em;margin-bottom:3px;display:block;}
-
-/* ── COUNCIL BANNER ── */
-.council{
-  background:linear-gradient(135deg,rgba(251,146,60,0.05),rgba(167,139,250,0.05));
-  border:1px solid rgba(251,146,60,0.14);border-radius:10px;
-  padding:0.9rem 1.2rem;text-align:center;
-  font-family:'JetBrains Mono',monospace !important;font-size:0.65rem;
-  color:#FB923C !important;letter-spacing:0.12em;margin-bottom:0.8rem;
-}
-
-/* ── HISTORY ── */
-.hist{
-  background:rgba(255,255,255,0.012);border:1px solid rgba(255,255,255,0.04);
-  border-radius:8px;padding:0.55rem 0.85rem;margin-bottom:0.3rem;
-  display:flex;align-items:center;gap:0.7rem;
-}
+.rcard-dot.aria{background:#A78BFA}.rcard-dot.rex{background:#38BDF8}.rcard-dot.lex{background:#34D399}.rcard-dot.max{background:#FB923C}
+.rcard-body{font-family:'Inter',sans-serif !important;font-size:0.92rem;line-height:1.78;color:rgba(238,235,248,0.75) !important;}
+.vtag{display:inline-flex;align-items:center;gap:5px;background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.14);color:#6EE7B7 !important;font-family:'JetBrains Mono',monospace !important;font-size:0.56rem;padding:3px 10px;border-radius:3px;letter-spacing:0.1em;margin:0.65rem 0 0.2rem;}
+.tx{background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.1);border-radius:8px;padding:0.65rem 0.9rem;margin:0.5rem 0;font-family:'Inter',sans-serif !important;font-size:0.87rem;color:rgba(238,235,248,0.48) !important;font-style:italic;}
+.tx-lbl{font-family:'JetBrains Mono',monospace !important;font-size:0.54rem;color:#38BDF8 !important;letter-spacing:0.12em;margin-bottom:3px;display:block;}
+.council{background:linear-gradient(135deg,rgba(251,146,60,0.05),rgba(167,139,250,0.05));border:1px solid rgba(251,146,60,0.14);border-radius:10px;padding:0.9rem 1.2rem;text-align:center;font-family:'JetBrains Mono',monospace !important;font-size:0.65rem;color:#FB923C !important;letter-spacing:0.12em;margin-bottom:0.8rem;}
+.hist{background:rgba(255,255,255,0.012);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:0.55rem 0.85rem;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.7rem;}
 .hist-a{font-family:'JetBrains Mono',monospace !important;font-size:0.54rem;letter-spacing:0.12em;min-width:58px;}
 .hist-q{font-family:'Inter',sans-serif !important;font-size:0.8rem;color:rgba(238,235,248,0.28) !important;font-style:italic;}
-
-/* ── MIC LABEL ── */
-.mic-lbl{font-family:'JetBrains Mono',monospace !important;font-size:0.55rem;
-  letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.16) !important;
-  margin-bottom:0.4rem;display:block;}
-
-/* ── FOOTER ── */
-.footer{
-  text-align:center;margin-top:4rem;
-  padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.04);
-}
-.footer-t{
-  font-family:'JetBrains Mono',monospace !important;font-size:0.54rem;
-  color:rgba(255,255,255,0.12) !important;letter-spacing:0.14em;line-height:2.4;
-}
+.mic-lbl{font-family:'JetBrains Mono',monospace !important;font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.16) !important;margin-bottom:0.4rem;display:block;}
+.footer{text-align:center;margin-top:4rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.04);}
+.footer-t{font-family:'JetBrains Mono',monospace !important;font-size:0.54rem;color:rgba(255,255,255,0.12) !important;letter-spacing:0.14em;line-height:2.4;}
 .footer-t a{color:rgba(167,139,250,0.3) !important;text-decoration:none;margin:0 0.5rem;}
-
-/* ── HIDE ── */
 #MainMenu,footer,header,.stDeployButton{display:none !important}
 </style>
-
-
 """, unsafe_allow_html=True)
 
 # ── STATE ──────────────────────────────────────────────────────────────────────
@@ -480,7 +255,7 @@ if ask and q:
         agent = AGENTS[chosen]; cls = agent["cls"]
 
         if pick == "Auto" and chosen != "Aria":
-            st.markdown(f'<div class="route">🧠 Aria routing → <strong style="color:{agent["accent"]}">{agent["emoji"]} {chosen}</strong> · {agent["role"]}</div>', unsafe_allow_html=True)
+            st.markdown('<div class="route">🧠 Aria routing → <strong style="color:' + agent["accent"] + '">' + agent["emoji"] + ' ' + chosen + '</strong> · ' + agent["role"] + '</div>', unsafe_allow_html=True)
             with st.spinner("Aria announcing..."):
                 ha = tts(f"Routing you to {chosen}, our {agent['role']}.", AGENTS["Aria"]["voice_id"])
             play(ha, f"Aria → {chosen}")
@@ -489,17 +264,19 @@ if ask and q:
             text = groq_call(chosen, q, ctx)
 
         if text:
-            st.markdown(f"""
-            <div class="rcard {cls}">
-              <div class="rcard-hd {cls}"><span class="rcard-dot {cls}"></span>{chosen.upper()} — {agent['role'].upper()}</div>
-              <div class="rcard-body">{text}</div>
-            </div>""", unsafe_allow_html=True)
+            st.markdown(
+                '<div class="rcard ' + cls + '">'
+                '<div class="rcard-hd ' + cls + '"><span class="rcard-dot ' + cls + '"></span>' + chosen.upper() + ' — ' + agent['role'].upper() + '</div>'
+                '<div class="rcard-body">' + text + '</div>'
+                '</div>',
+                unsafe_allow_html=True
+            )
             with st.spinner(f"ElevenLabs: {chosen}'s voice..."):
                 audio = tts(text, agent["voice_id"])
             play(audio, f"Speaking as {chosen}")
             st.session_state.history.append({"q": q, "agent": chosen, "text": text})
         else:
-            st.error("Groq unavailable — try again.")
+            st.error("All Groq models failed — see ⚠️ details above.")
 
     else:
         st.markdown('<div class="council">⚡ COUNCIL IN SESSION — voices play one after another automatically</div>', unsafe_allow_html=True)
@@ -512,11 +289,13 @@ if ask and q:
             with st.spinner(f"{name} responding..."):
                 text = groq_call(name, f"From your perspective as {agent['role']}, give a sharp 2-sentence take on: {q}", ctx)
             if text:
-                st.markdown(f"""
-                <div class="rcard {agent['cls']}">
-                  <div class="rcard-hd {agent['cls']}"><span class="rcard-dot {agent['cls']}"></span>{name.upper()} — {agent['role'].upper()}</div>
-                  <div class="rcard-body">{text}</div>
-                </div>""", unsafe_allow_html=True)
+                st.markdown(
+                    '<div class="rcard ' + agent['cls'] + '">'
+                    '<div class="rcard-hd ' + agent['cls'] + '"><span class="rcard-dot ' + agent['cls'] + '"></span>' + name.upper() + ' — ' + agent['role'].upper() + '</div>'
+                    '<div class="rcard-body">' + text + '</div>'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
                 with st.spinner(f"ElevenLabs: {name}..."):
                     audio = tts(text, agent["voice_id"])
                 play(audio, name)
@@ -526,11 +305,13 @@ if ask and q:
             with st.spinner("Aria synthesizing..."):
                 syn = groq_call("Aria", f"In 2 sentences, give one final synthesized insight: {' | '.join(council_texts)}")
             if syn:
-                st.markdown(f"""
-                <div class="rcard aria" style="border-color:rgba(167,139,250,0.22) !important">
-                  <div class="rcard-hd aria"><span class="rcard-dot aria"></span>ARIA — SYNTHESIS</div>
-                  <div class="rcard-body">{syn}</div>
-                </div>""", unsafe_allow_html=True)
+                st.markdown(
+                    '<div class="rcard aria" style="border-color:rgba(167,139,250,0.22) !important">'
+                    '<div class="rcard-hd aria"><span class="rcard-dot aria"></span>ARIA — SYNTHESIS</div>'
+                    '<div class="rcard-body">' + syn + '</div>'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
                 with st.spinner("Aria final..."):
                     syn_a = tts(syn, AGENTS["Aria"]["voice_id"])
                 play(syn_a, "Aria Synthesis")
@@ -544,7 +325,11 @@ if st.session_state.history:
     st.markdown('<span class="sec" style="margin-top:2.5rem;display:block">Session History</span>', unsafe_allow_html=True)
     for item in reversed(st.session_state.history[-5:]):
         color = AGENTS.get(item["agent"],{}).get("accent","#888") if item["agent"]!="Council" else "#FB923C"
-        st.markdown(f'<div class="hist"><span class="hist-a" style="color:{color}">{item["agent"].upper()}</span><span class="hist-q">"{item["q"]}"</span></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="hist"><span class="hist-a" style="color:' + color + '">' + item["agent"].upper() + '</span>'
+            '<span class="hist-q">"' + item["q"] + '"</span></div>',
+            unsafe_allow_html=True
+        )
 
 # ── FOOTER ─────────────────────────────────────────────────────────────────────
 st.markdown("""
