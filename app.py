@@ -95,16 +95,19 @@ def scribe(audio_bytes):
     return None
 
 def play(audio_bytes, label=""):
-    """Play a single audio clip (solo mode)."""
     if not audio_bytes: return
+
+    # 🔊 Voice pulse animation
+    st.markdown('<div class="voice-pulse"></div>', unsafe_allow_html=True)
+
     b64 = base64.b64encode(audio_bytes).decode()
     if label:
         st.markdown(f'<div class="vtag">🔊 {label}</div>', unsafe_allow_html=True)
+
     streamlit.components.v1.html(
         f'<audio autoplay style="display:none"><source src="data:audio/mpeg;base64,{b64}" type="audio/mpeg"></audio>',
         height=0
     )
-
 def play_queue(items):
     """Play a list of (audio_bytes, label) sequentially — one after another via JS onended chain."""
     clips = []
@@ -141,6 +144,131 @@ def play_queue(items):
     streamlit.components.v1.html(html, height=0)
 
 st.set_page_config(page_title="VocalClaw", page_icon="🎙️", layout="centered", initial_sidebar_state="collapsed")
+# ================= CINEMATIC UI (FINAL CLEAN VERSION) =================
+st.markdown("""
+<!-- 🎥 Background Video -->
+<div class="video-bg">
+  <video autoplay muted loop playsinline>
+    <source src="https://cdn.coverr.co/videos/coverr-night-sky-1575/1080p.mp4" type="video/mp4">
+  </video>
+</div>
+
+<!-- ✨ Cursor Glow -->
+<div class="cursor-glow"></div>
+
+<!-- 🌌 Particles -->
+<canvas id="particles"></canvas>
+
+<style>
+/* === BACKGROUND VIDEO === */
+.video-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+}
+.video-bg video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(6px) brightness(0.35);
+}
+
+/* === PARTICLES === */
+#particles {
+    position: fixed;
+    inset: 0;
+    z-index: -9;
+}
+
+/* === CURSOR GLOW === */
+.cursor-glow {
+    position: fixed;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(167,139,250,0.25), transparent 70%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+/* === GLASS EFFECT (SAFE OVERRIDE) === */
+.block-container {
+    backdrop-filter: blur(8px);
+}
+
+/* === HOVER LIFT === */
+button:hover {
+    transform: translateY(-2px);
+    transition: 0.2s ease;
+}
+
+/* === VOICE PULSE === */
+.voice-pulse {
+    position: fixed;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(167,139,250,0.25);
+    animation: pulse 1.2s infinite;
+    z-index: 10000;
+}
+
+@keyframes pulse {
+    0% { transform: translateX(-50%) scale(0.8); opacity: 0.6; }
+    50% { transform: translateX(-50%) scale(1.2); opacity: 0.2; }
+    100% { transform: translateX(-50%) scale(0.8); opacity: 0.6; }
+}
+</style>
+
+<script>
+// Cursor glow
+const glow = document.querySelector(".cursor-glow");
+document.addEventListener("mousemove", e => {
+    if (glow) {
+        glow.style.left = e.clientX + "px";
+        glow.style.top = e.clientY + "px";
+    }
+});
+
+// Particles
+const canvas = document.getElementById("particles");
+if (canvas) {
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = Array.from({length: 60}, () => ({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*2,
+        d: Math.random()*1
+    }));
+
+    function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "rgba(167,139,250,0.4)";
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fill();
+        });
+        update();
+    }
+
+    function update() {
+        particles.forEach(p => {
+            p.y += p.d;
+            if(p.y > canvas.height) p.y = 0;
+        });
+    }
+
+    setInterval(draw, 33);
+}
+</script>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
