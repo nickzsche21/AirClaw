@@ -95,6 +95,7 @@ def scribe(audio_bytes):
     return None
 
 def play(audio_bytes, label=""):
+    """Play a single audio clip (solo mode)."""
     if not audio_bytes: return
     b64 = base64.b64encode(audio_bytes).decode()
     if label:
@@ -103,6 +104,41 @@ def play(audio_bytes, label=""):
         f'<audio autoplay style="display:none"><source src="data:audio/mpeg;base64,{b64}" type="audio/mpeg"></audio>',
         height=0
     )
+
+def play_queue(items):
+    """Play a list of (audio_bytes, label) sequentially — one after another via JS onended chain."""
+    clips = []
+    labels = []
+    for audio_bytes, label in items:
+        if not audio_bytes: continue
+        clips.append(base64.b64encode(audio_bytes).decode())
+        labels.append(label or "")
+    if not clips: return
+
+    # Show all labels
+    for label in labels:
+        if label:
+            st.markdown(f'<div class="vtag">🔊 {label}</div>', unsafe_allow_html=True)
+
+    # Build JS array of base64 clips and chain via onended
+    js_array = "[" + ",".join(f'"{c}"' for c in clips) + "]"
+    html = f"""
+    <script>
+    (function(){{
+        var clips = {js_array};
+        var i = 0;
+        function playNext() {{
+            if (i >= clips.length) return;
+            var a = new Audio("data:audio/mpeg;base64," + clips[i++]);
+            a.onended = playNext;
+            a.onerror = playNext;
+            a.play().catch(playNext);
+        }}
+        playNext();
+    }})();
+    </script>
+    """
+    streamlit.components.v1.html(html, height=0)
 
 st.set_page_config(page_title="VocalClaw", page_icon="🎙️", layout="centered", initial_sidebar_state="collapsed")
 
@@ -279,14 +315,15 @@ if ask and q:
             st.error("All Groq models failed — see ⚠️ details above.")
 
     else:
-        st.markdown('<div class="council">⚡ COUNCIL IN SESSION — voices play one after another automatically</div>', unsafe_allow_html=True)
-        with st.spinner("Aria opening council..."):
-            ia = tts(f"The council is now in session. All four agents will share their perspective on: {q}", AGENTS["Aria"]["voice_id"])
-        play(ia, "Aria — Opening")
+        st.markdown('<div class="council">⚡ COUNCIL IN SESSION — all agents respond, then voices play in order</div>', unsafe_allow_html=True)
 
+        # ── Step 1: Generate ALL text first (show cards immediately) ──
+        ia_text = f"The council is now in session. All four agents will share their perspective on: {q}"
         council_texts = []
+        council_data = []
+
         for name, agent in AGENTS.items():
-            with st.spinner(f"{name} responding..."):
+            with st.spinner(f"{name} thinking..."):
                 text = groq_call(name, f"From your perspective as {agent['role']}, give a sharp 2-sentence take on: {q}", ctx)
             if text:
                 st.markdown(
@@ -296,11 +333,10 @@ if ask and q:
                     '</div>',
                     unsafe_allow_html=True
                 )
-                with st.spinner(f"ElevenLabs: {name}..."):
-                    audio = tts(text, agent["voice_id"])
-                play(audio, name)
                 council_texts.append(f"{name}: {text}")
+                council_data.append((name, agent, text))
 
+        syn = None
         if council_texts:
             with st.spinner("Aria synthesizing..."):
                 syn = groq_call("Aria", f"In 2 sentences, give one final synthesized insight: {' | '.join(council_texts)}")
@@ -312,9 +348,21 @@ if ask and q:
                     '</div>',
                     unsafe_allow_html=True
                 )
-                with st.spinner("Aria final..."):
+
+            # ── Step 2: Generate ALL audio ──
+            audio_queue = []
+            with st.spinner("Generating voices — will play in sequence..."):
+                ia = tts(ia_text, AGENTS["Aria"]["voice_id"])
+                if ia: audio_queue.append((ia, "Aria — Opening"))
+                for name, agent, text in council_data:
+                    a = tts(text, agent["voice_id"])
+                    if a: audio_queue.append((a, name))
+                if syn:
                     syn_a = tts(syn, AGENTS["Aria"]["voice_id"])
-                play(syn_a, "Aria Synthesis")
+                    if syn_a: audio_queue.append((syn_a, "Aria — Synthesis"))
+
+            # ── Step 3: ONE iframe, JS chains them via onended ──
+            play_queue(audio_queue)
             st.session_state.history.append({"q": q, "agent": "Council", "text": " | ".join(council_texts)})
 
 elif ask:
