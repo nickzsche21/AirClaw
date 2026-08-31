@@ -1,6 +1,6 @@
 """AirClaw — point OpenClaw at a local model and stop paying per token."""
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 
 from airclaw.backends import Backend, detect_backends, pick_backend
 

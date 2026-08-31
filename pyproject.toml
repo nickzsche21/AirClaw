@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "airclaw"
-version         = "3.0.0"
+version         = "3.0.1"
 description     = "Run OpenClaw on a local model. Zero API cost."
 readme          = "README.md"
 license         = { text = "MIT" }

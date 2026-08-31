@@ -51,3 +51,39 @@ CANDIDATES: tuple[tuple[str, str, str], ...] = (
     ("jan",        "http://127.0.0.1:1337/v1",  "Jan"),
     ("tgw",        "http://127.0.0.1:5000/v1",  "text-generation-webui"),
 )
+
+
+# Models that cannot answer a chat completion. Ollama's /v1/models lists every
+# pulled model, embedding and reranking ones included, so picking models[0]
+# blindly can hand an agent an embedding model and fail every request.
+_NOT_CHAT = (
+    "embed", "embedding", "bge-", "bge:", "gte-", "gte:", "e5-", "e5:",
+    "all-minilm", "nomic-embed", "mxbai-embed", "snowflake-arctic-embed",
+    "rerank", "reranker", "-guard", "guardrail", "whisper", "clip-",
+    "stable-diffusion", "sdxl", "tts-", "-tts",
+)
+
+# Signals that a model is instruction-tuned, and so a sane default.
+_PREFERRED = ("coder", "instruct", "-it", "chat")
+
+
+def is_chat_model(model_id: str) -> bool:
+    """True if the id does not look like an embedding/rerank/audio model."""
+    lowered = model_id.lower()
+    return not any(marker in lowered for marker in _NOT_CHAT)
+
+
+def choose_model(models: tuple[str, ...] | list[str]) -> str | None:
+    """Pick a sensible default chat model from what a backend reports.
+
+    Prefers an instruction-tuned model, falls back to any chat-capable one, and
+    returns None when the backend only has things that cannot chat.
+    """
+    usable = [m for m in models if is_chat_model(m)]
+    if not usable:
+        return None
+    for marker in _PREFERRED:
+        for model in usable:
+            if marker in model.lower():
+                return model
+    return usable[0]

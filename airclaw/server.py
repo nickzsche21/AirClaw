@@ -27,6 +27,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from airclaw import __version__
 from airclaw.backends import Backend, detect_backends, pick_backend
 from airclaw.backends.airllm import AirLLMBackend
+from airclaw.backends.base import choose_model
 
 DEFAULT_PORT = int(os.environ.get("AIRCLAW_PORT", "4096"))
 DEFAULT_HOST = os.environ.get("AIRCLAW_HOST", "127.0.0.1")
@@ -60,7 +61,7 @@ class Gateway:
         self.backend = backend
         self.airllm = None
         self.mode = "served"
-        self.model = model or (backend.models[0] if backend.models else None)
+        self.model = model or choose_model(backend.models)
 
     def use_airllm(self, model: str | None) -> None:
         self.airllm = AirLLMBackend(model)
@@ -74,6 +75,14 @@ class Gateway:
             return requested
         if self.model:
             return self.model
+        if self.backend is not None and self.backend.models:
+            raise HTTPException(
+                status_code=503,
+                detail=f"{self.backend.name} has no chat-capable model — it reports only "
+                       f"{', '.join(self.backend.models)}. Those look like embedding or "
+                       f"rerank models. Pull a chat model (e.g. `ollama pull "
+                       f"qwen2.5-coder:7b`), or name one with --model.",
+            )
         raise HTTPException(
             status_code=503,
             detail="No model available. Pull one (e.g. `ollama pull qwen2.5-coder:7b`) "
