@@ -8,12 +8,18 @@ it. Configure OpenClaw once; swap Ollama for llama.cpp for vLLM underneath
 without touching agent config again.
 
 ```bash
-pip install airclaw
+pip install git+https://github.com/nickzsche21/AirClaw
 
 airclaw detect     # what's running locally?
 airclaw start      # gateway on :4096  (leave running)
 airclaw patch      # wire OpenClaw to it
 ```
+
+> **Install from git for now.** PyPI still serves 2.0.0, whose `airclaw patch`
+> wrote a config OpenClaw ignores and then reported success. Use the command
+> above, or grab a wheel from
+> [releases](https://github.com/nickzsche21/AirClaw/releases). `pip install
+> airclaw` becomes the right command once 3.0.0 is published.
 
 Restart OpenClaw. That's it — your agent now runs on your own hardware.
 
@@ -126,7 +132,7 @@ Also fixed in 3.0:
 To upgrade:
 
 ```bash
-pip install --upgrade airclaw
+pip install --upgrade --force-reinstall git+https://github.com/nickzsche21/AirClaw
 airclaw restore   # only if 2.x touched a config you want reverted
 airclaw patch
 airclaw doctor
